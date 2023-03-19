@@ -28,11 +28,18 @@ import Examples
     genT,
     genTree,
     hasType,
+    hasTypeLcA,
+    genProg,
     isAVL,
     isBST,
     isSorted,
     mergeFreqs,
     sumLeavesMul3,
+    wellFormedAdtDecls,
+    wellFormedType,
+    genLcAType,
+    genAdtDecls,
+    nAdts,
   )
 import FreeGen (FreeGen)
 import GHC.Clock (getMonotonicTimeNSec)
@@ -47,16 +54,18 @@ import Text.Printf (printf)
 
 -- | Defines the parameters of the experimental setup.
 currentExperiments :: [Experiment]
-currentExperiments = [bst, sorted, avl, stlc]
+currentExperiments = [lcaStlc]  --lcaStlc
   where
-    bst = Experiment "BST" genTree 50 isBST
-    sorted = Experiment "SORTED" genList 50 isSorted
-    avl = Experiment "AVL" genAVLSkeleton 500 isAVL
-    stlc = Experiment "STLC" genExpr 400 hasType
-    div3 = Experiment "DIV3" genT 1 sumLeavesMul3
+--    lcaSt = Experiment "LCAST" (genAdtDecls nAdts ) 40 wellFormedAdtDecls
+    lcaStlc = Experiment "LCASTLC" genProg 40 hasTypeLcA
+    -- bst = Experiment "BST" genTree 50 isBST
+    -- sorted = Experiment "SORTED" genList 50 isSorted
+    -- avl = Experiment "AVL" genAVLSkeleton 500 isAVL
+    -- stlc = Experiment "STLC" genExpr 400 hasType
+    -- div3 = Experiment "DIV3" genT 1 sumLeavesMul3
 
 runningTime :: Seconds
-runningTime = Seconds 60
+runningTime = Seconds 5
 
 makeCharts :: Bool
 makeCharts = False
@@ -76,6 +85,7 @@ main = do
     processResults tag ename valid m = do
       unless (all valid (Map.keys m)) $ error "INVALID" -- Coherence check, for safety
       printStats tag m
+      writeProgs ("charts/" ++ tag ++ "_" ++ ename ++ "_progs.dat") m
       when makeCharts $ do
         writeSizes ("charts/" ++ tag ++ "_" ++ ename ++ "_sizes.dat") m
         writeStamps ("charts/" ++ tag ++ "_" ++ ename ++ "_stamps.dat") m
@@ -106,6 +116,8 @@ main = do
             ++ showStats subtreeStats
         )
 
+    writeProgs fname m =
+      writeFile fname (intercalate "\n" (map show (Map.keys m)))
     writeFreqs fname m =
       writeFile fname
         . unlines
